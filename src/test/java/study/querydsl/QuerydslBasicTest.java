@@ -19,6 +19,7 @@ import static study.querydsl.entity.QMember.*;
 public class QuerydslBasicTest {
     @PersistenceContext
     EntityManager em;
+    JPAQueryFactory queryFactory;
 
     @BeforeEach
     public void before() {
@@ -34,6 +35,8 @@ public class QuerydslBasicTest {
         em.persist(member2);
         em.persist(member3);
         em.persist(member4);
+
+        queryFactory = new JPAQueryFactory(em);
     }
 
     @Test
@@ -49,13 +52,11 @@ public class QuerydslBasicTest {
     }
     @Test
     public void startQuerydsl() {
-//member1을 찾아라.
-        JPAQueryFactory queryFactory = new JPAQueryFactory(em);
-        QMember m = new QMember("m");
+
         Member findMember = queryFactory
-                .select(m)
-                .from(m)
-                .where(m.username.eq("member1"))//파라미터 바인딩 처리
+                .select(member)
+                .from(member)
+                .where(member.username.eq("member1"))//파라미터 바인딩 처리
                 .fetchOne();
         assertThat(findMember.getUsername()).isEqualTo("member1");
     }
