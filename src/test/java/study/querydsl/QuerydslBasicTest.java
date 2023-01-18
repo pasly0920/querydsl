@@ -457,4 +457,16 @@ public class QuerydslBasicTest {
         return usernameEq(usernameCond).and(ageEq(ageCond));
     }
 
+    @Test
+    public void bulkQuery() throws Exception {
+        long count = queryFactory
+                .update(member)
+                .set(member.username, "비회원") .where(member.age.lt(28))
+                .execute();
+
+        em.flush();
+        em.clear();
+
+     }
+
 }
