@@ -2,7 +2,9 @@ package study.querydsl;
 
 import com.querydsl.core.QueryResults;
 import com.querydsl.core.Tuple;
+import com.querydsl.core.types.Projections;
 import com.querydsl.core.types.dsl.CaseBuilder;
+import com.querydsl.core.types.dsl.Expressions;
 import com.querydsl.jpa.JPAExpressions;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import javax.persistence.EntityManagerFactory;
@@ -12,6 +14,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.transaction.annotation.Transactional;
+import study.querydsl.dto.MemberDto;
 import study.querydsl.entity.Member;
 import study.querydsl.entity.QMember;
 import study.querydsl.entity.QTeam;
@@ -321,6 +324,90 @@ public class QuerydslBasicTest {
                           .when(member.age.between(0, 20)).then("0~20살") .when(member.age.between(21, 30)).then("21~30살") .otherwise("기타"))
                   .from(member)
                   .fetch();
+    }
+
+    @Test
+    public void concatConstant() throws Exception {
+        Tuple result = queryFactory
+                .select(member.username, Expressions.constant("A"))
+                .from(member)
+                .fetchFirst();
+     }
+
+     @Test
+     public void concatString() throws Exception {
+         String result = queryFactory
+                 .select(member.username.concat("_").concat(member.age.stringValue()))
+                 .from(member)
+                 .where(member.username.eq("member1"))
+                 .fetchOne();
+      }
+
+      @Test
+      public void tupleProjection() throws Exception {
+          List<Tuple> result = queryFactory
+                  .select(member.username, member.age)
+                  .from(member)
+                  .fetch();
+          for (Tuple tuple : result) {
+              String username = tuple.get(member.username);
+              Integer age = tuple.get(member.age);
+              System.out.println("username=" + username);
+              System.out.println("age=" + age);
+          }
+       }
+
+       @Test
+       public void pureJpaDto() throws Exception {
+           List<MemberDto> result = em.createQuery(
+                           "select new study.querydsl.dto.MemberDto(m.username, m.age) " +
+                                   "from Member m", MemberDto.class)
+                   .getResultList();
+       }
+
+       @Test
+       public void findDtoBySetter() throws Exception {
+           List<MemberDto> result = queryFactory
+                   .select(Projections.bean(MemberDto.class,
+                           member.username,
+                           member.age))
+                   .from(member)
+                   .fetch();
+
+           for (MemberDto memberDto : result) {
+               System.out.println("memberDto = " + memberDto);
+           }
+
+        }
+
+    @Test
+    public void findDtoByField() throws Exception {
+        List<MemberDto> result = queryFactory
+                .select(Projections.fields(MemberDto.class,
+                        member.username,
+                        member.age))
+                .from(member)
+                .fetch();
+
+        for (MemberDto memberDto : result) {
+            System.out.println("memberDto = " + memberDto);
+        }
+
+    }
+
+    @Test
+    public void findDtoByConstructor() throws Exception {
+        List<MemberDto> result = queryFactory
+                .select(Projections.constructor(MemberDto.class,
+                        member.username,
+                        member.age))
+                .from(member)
+                .fetch();
+
+        for (MemberDto memberDto : result) {
+            System.out.println("memberDto = " + memberDto);
+        }
+
     }
 
 }
